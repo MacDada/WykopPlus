@@ -125,11 +125,16 @@ $(function() {
 	
 	
 	/**
-	 * Przycisk ukrywania wszystkich artykułów na stronie.
+	 * Przyciski ukrywania wszystkich artykułów na stronie.
 	 */
 	$('<a href="#" style="float: right; margin-right: 10px; font-size: 9px;">ukryj wszystkie</a>').insertAfter("input[name='wp_show_hidden_articles']").click(function(e) {
 		e.preventDefault();
 		hide_article_buttons.trigger("click");
+	});
+	$('<a href="#" style="font-size: 9px;">ukryj wszystkie</a>').insertBefore(".pager").click(function(e) {
+		e.preventDefault();
+		hide_article_buttons.trigger("click");
+		unsafeWindow.scrollTo(0, 0);
 	});
 	
 });
