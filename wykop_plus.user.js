@@ -7,22 +7,14 @@
 // ==/UserScript==
 
 
-/**
- * Hack: 
- * - loading jQuery from Window on FF,
- * - on Chrome jQuery is already loaded by TamperMonkey.
- */
-if ('undefined' == typeof $) {
-	$ = unsafeWindow.$;
-}
-
+DNUS = (function() {
+	var DNUS = {
+		plugins: [],
+		registerPlugin: registerPlugin,
+		env: getEnviroment
+	};
 	
-$(function() {
-
-	var isNightThemeOn = ("rgb(28, 28, 28)" == $("body").css("background-color"));
-	var hide_article_buttons = null;
-
-
+	
 	/**
 	 * Check if an element exists in given array
 	 * using a comparer function.
@@ -30,7 +22,7 @@ $(function() {
 	 * comparer : function(currentElement)
 	 */
 	Array.prototype.inArray = function(comparer) { 
-	    for (var i=0; i < this.length; i++) { 
+	    for (var i = 0; i < this.length; i++) { 
 	        if (comparer(this[i])) {
 	        	return true;
 	        }
@@ -38,7 +30,7 @@ $(function() {
 	    return false; 
 	}; 
 	
-
+	
 	/**
 	 * Adds an element to the array, 
 	 * if it does not already exist,
@@ -50,44 +42,70 @@ $(function() {
 	    }
 	};
 	
-
-	/**
-	 * Pobiera z pamięci przeglądarki linki do artykułów,
-	 * które mają nie być wyświetlane.
-	 */
-	function getHiddenArticlesUrls() {
-		try {
-			var urls = JSON.parse(localStorage.getItem("wp_hidden_articles"));
-			if (!(('object' == typeof(urls)) && (urls instanceof Array))) {
-				urls = [];
-			}
-		} catch(e) {
-			var urls = [];
-		}
-		return urls;	
-	}
-
-
-	/**
-	 * Zapisuje w lokalnej pamięci przeglądarki URL do artykułu,
-	 * który nie ma być wyświetlany.
-	 */
-	function addHiddenArticleUrl(url) {
-		urls = getHiddenArticlesUrls();
-		
-		urls.pushIfNotExists(url, function(e) {
-			return (url == e);
-		});
-		
-		localStorage.setItem("wp_hidden_articles", JSON.stringify(urls));
+	
+	function registerPlugin(name, callback) {
+		if (!DNUS.plugins.inArray(function(currentElement) { 
+			return (name == currentElement.name);
+		})) {
+			DNUS.plugins.push({ name: name, callback: callback });
+			alert("DNUS zarejestrował nową wtyczkę: „" + name + "”");
+			callback(getEnviroment());
+			alert("Wtyczka „" + name + "” została uruchomiona.");
+		} else {
+			alert("Wtyczka „" + name + "” jest już zarejestrowana w DNUS!");
+		}	
 	};
+	
+	
+	function getEnviroment() {
+		/**
+		 * Hack: 
+		 * - loading jQuery from Window on FF,
+		 * - on Chrome jQuery is already loaded by TamperMonkey.
+		 */
+		if ('undefined' == typeof $) {
+			$ = unsafeWindow.$;
+		}
+	
+		return {
+			$: $,
+			unsafeWindow: unsafeWindow,
+			logger: (function(){ return { log: unsafeWindow.console.log }; })(),
+			storage: {}
+		}
+	};
+	
+	
+	return DNUS;
+})(); // eo DNUS
+
+
+
+/**
+ * „Ukrywanie artykułów”
+ * 
+ * Wtyczka DnUserScripts dla Wykop.pl.
+ */
+DNUS.registerPlugin('WykopUkrywanieArtykulowPlugin', function(env) {
+
+	// ładuję zmienne środowiskowe:
+	var $ = env.$,
+		unsafeWindow = env.unsafeWindow,
+		logger = env.logger,
+		storage = env.storage;
+		
+	// zmienne globalne wtyczki:
+	var isNightThemeOn, hide_article_buttons;
+		
+	
+	isNightThemeOn = ("rgb(28, 28, 28)" == $("body").css("background-color"));
 	
 	
 	/**
 	 * Ukrywam linki z listy na starcie.
 	 */
 	$("article.entry .content header h2 a.link").each(function() {
-		o = $(this);
+		var o = $(this);
 		var urls = getHiddenArticlesUrls();
 		
 		if (urls.inArray(function(e) {
@@ -137,4 +155,37 @@ $(function() {
 		unsafeWindow.scrollTo(0, 0);
 	});
 	
-});
+
+	/**
+	 * Pobiera z pamięci przeglądarki linki do artykułów,
+	 * które mają nie być wyświetlane.
+	 */
+	function getHiddenArticlesUrls() {
+		try {
+			var urls = JSON.parse(localStorage.getItem("wp_hidden_articles"));
+			if (!(('object' == typeof(urls)) && (urls instanceof Array))) {
+				urls = [];
+			}
+		} catch(e) {
+			var urls = [];
+		}
+		return urls;	
+	}; // eo getHiddenArticlesUrls()
+	
+
+	/**
+	 * Zapisuje w lokalnej pamięci przeglądarki URL do artykułu,
+	 * który nie ma być wyświetlany.
+	 */
+	function addHiddenArticleUrl(url) {
+		urls = getHiddenArticlesUrls();
+		
+		urls.pushIfNotExists(url, function(e) {
+			return (url == e);
+		});
+		
+		localStorage.setItem("wp_hidden_articles", JSON.stringify(urls));
+	}; // eo addHiddenArticleUrl()	
+
+	
+}); // eo WykopUkrywanieArtykulowPlugin
