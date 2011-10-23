@@ -7,76 +7,100 @@
 // ==/UserScript==
 
 
+
+/**
+ * Useful function!
+ *
+ * Check if an element exists in given array
+ * using a comparer function.
+ *
+ * comparer : function(currentElement)
+ */
+Array.prototype.inArray = function(comparer) { 
+    for (var i = 0; i < this.length; i++) { 
+        if (comparer(this[i])) {
+        	return true;
+        }
+    }
+    return false; 
+}; 
+
+
+/**
+ * Useful function!
+ *
+ * Adds an element to the array, 
+ * if it does not already exist,
+ * using a comparer function.
+ */
+Array.prototype.pushIfNotExists = function(element, comparer) { 
+    if (!this.inArray(comparer)) {
+        this.push(element);
+    }
+};
+
+
+
+/**
+ * DNUserScript
+ */
 DNUS = (function() {
+
 	var DNUS = {
 		plugins: [],
-		registerPlugin: registerPlugin,
-		env: getEnviroment
+		registerPlugin: registerPlugin
 	};
 	
 	
 	/**
-	 * Check if an element exists in given array
-	 * using a comparer function.
-	 *
-	 * comparer : function(currentElement)
+	 * Change this to TRUE if you want logger.debug("message") to work.
 	 */
-	Array.prototype.inArray = function(comparer) { 
-	    for (var i = 0; i < this.length; i++) { 
-	        if (comparer(this[i])) {
-	        	return true;
-	        }
-	    }
-	    return false; 
-	}; 
+	var debug = false;
+	
+	
+	// firebug console:
+	var logger = { 
+		log: unsafeWindow.console.log,
+		debug: ((debug) ? unsafeWindow.console.log : function(){})
+	};
+
+	
+	// temporarly objects witout a use:
+	var storage = {};
+	var config = {};
+
+
+	/**
+	 * Hack: 
+	 * - loading jQuery from Window on FF,
+	 * - on Chrome jQuery is already loaded by TamperMonkey.
+	 */
+	if ('undefined' == typeof $) {
+		$ = unsafeWindow.$;
+	}
+	
+	logger.debug('The enviroment is ready.');
 	
 	
 	/**
-	 * Adds an element to the array, 
-	 * if it does not already exist,
-	 * using a comparer function.
+	 * Informs DNUS that a plugin wants to get called when the enviroment is ready.
 	 */
-	Array.prototype.pushIfNotExists = function(element, comparer) { 
-	    if (!this.inArray(comparer)) {
-	        this.push(element);
-	    }
-	};
-	
-	
 	function registerPlugin(name, callback) {
 		if (!DNUS.plugins.inArray(function(currentElement) { 
 			return (name == currentElement.name);
 		})) {
 			DNUS.plugins.push({ name: name, callback: callback });
-			alert("DNUS zarejestrował nową wtyczkę: „" + name + "”");
-			callback(getEnviroment());
-			alert("Wtyczka „" + name + "” została uruchomiona.");
+			logger.debug('The plugin "' + name + ' has been registered.');
+			callback($, unsafeWindow, logger);
+			logger.debug('The plugin "' + name + '" has been activated.');
 		} else {
-			alert("Wtyczka „" + name + "” jest już zarejestrowana w DNUS!");
+			alert('The plugin "' + name + '" is already registered in DNUS!');
 		}	
 	};
-	
-	
-	function getEnviroment() {
-		/**
-		 * Hack: 
-		 * - loading jQuery from Window on FF,
-		 * - on Chrome jQuery is already loaded by TamperMonkey.
-		 */
-		if ('undefined' == typeof $) {
-			$ = unsafeWindow.$;
-		}
-	
-		return {
-			$: $,
-			unsafeWindow: unsafeWindow,
-			logger: (function(){ return { log: unsafeWindow.console.log }; })(),
-			storage: {}
-		}
-	};
-	
+
 	
 	return DNUS;
+
 })(); // eo DNUS
 
 
@@ -86,19 +110,12 @@ DNUS = (function() {
  * 
  * Wtyczka DnUserScripts dla Wykop.pl.
  */
-DNUS.registerPlugin('WykopUkrywanieArtykulowPlugin', function(env) {
-
-	// ładuję zmienne środowiskowe:
-	var $ = env.$,
-		unsafeWindow = env.unsafeWindow,
-		logger = env.logger,
-		storage = env.storage;
+DNUS.registerPlugin('WykopUkrywanieArtykulowPlugin', function($, unsafeWindow, logger) {
 		
 	// zmienne globalne wtyczki:
-	var isNightThemeOn, hide_article_buttons;
+	var isNightThemeOn = ("rgb(28, 28, 28)" == $("body").css("background-color"));
+	var hide_article_buttons = null;
 		
-	
-	isNightThemeOn = ("rgb(28, 28, 28)" == $("body").css("background-color"));
 	
 	
 	/**
