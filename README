@@ -1,0 +1,12 @@
+===== Wykop Plus ======
+
+Wersja: 0.1
+Autor: Dawid Nowak
+
+
+Do zrobienia:
+ * przycisk przywracania ukrytych artykułów
+ * mechanizm czyszczenia listy ukrytych artykułów
+ * mechanizm importowania/eksportowania ukrytych artykułów
+ * mechanizm aktualizacji skryptu
+ * mechanizm dodawania CSS
