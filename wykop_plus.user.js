@@ -7,7 +7,6 @@
 // ==/UserScript==
 
 
-
 /**
  * Useful function!
  *
@@ -42,11 +41,13 @@ Array.prototype.pushIfNotExists = function(element, comparer) {
 
 
 /**
- * DNUserScript
+ * DNUserscriptsHelper
+ *
+ * Works with GreaseMonkey extension for FireFox browser.
  */
-DNUS = (function() {
+DNUH = (function() {
 
-    var DNUS = {
+    var DNUH = {
         plugins: [],
         registerPlugin: registerPlugin
     };
@@ -66,8 +67,8 @@ DNUS = (function() {
 
 
     // temporarly objects witout a use:
-    var storage = {};
-    var config = {};
+	//var storage = {};
+	//var config = {};
 
 
     /**
@@ -76,35 +77,39 @@ DNUS = (function() {
 	 * - on Chrome jQuery is already loaded by TamperMonkey.
 	 */
     if ('undefined' == typeof $) {
-        $ = unsafeWindow.$;
-    }
+		if (unsafeWindow.$) {
+            $ = unsafeWindow.$;
+		} else {
+			// here should be added loading jQuery from external source
+        }
+	}
 
     logger.debug('The enviroment is ready.');
 
 
     /**
-	 * Informs DNUS that a plugin wants to get called when the enviroment is ready.
+	 * Informs DNUH that a plugin wants to get called when the enviroment is ready.
 	 */
     function registerPlugin(name, callback) {
-        if (!DNUS.plugins.inArray(function(currentElement) {
+        if (!DNUH.plugins.inArray(function(currentElement) {
             return (name == currentElement.name);
         })) {
-            DNUS.plugins.push({
+            DNUH.plugins.push({
                 name: name,
                 callback: callback
             });
-            logger.debug('The plugin "' + name + ' has been registered.');
+            logger.debug('The plugin "' + name + '" has been registered.');
             callback($, unsafeWindow, logger);
             logger.debug('The plugin "' + name + '" has been activated.');
         } else {
-            alert('The plugin "' + name + '" is already registered in DNUS!');
+            alert('The plugin "' + name + '" is already registered in DNUH!');
         }
     };
 
 
-    return DNUS;
+    return DNUH;
 
-})(); // eo DNUS
+})(); // eo DNUH
 
 
 
@@ -113,7 +118,7 @@ DNUS = (function() {
  *
  * Wtyczka DnUserScripts dla Wykop.pl.
  */
-DNUS.registerPlugin('WykopUkrywanieArtykulowPlugin', function($, unsafeWindow, logger) {
+DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function($, unsafeWindow, logger) {
 
     // zmienne globalne wtyczki:
     var isNightThemeOn = ("rgb(28, 28, 28)" == $("body").css("background-color"));
