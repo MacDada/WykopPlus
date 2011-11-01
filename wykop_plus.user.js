@@ -181,13 +181,14 @@ DNUS.registerPlugin('WykopUkrywanieArtykulowPlugin', function($, unsafeWindow, l
 	 * które mają nie być wyświetlane.
 	 */
     function getHiddenArticlesUrls() {
+        var urls = [];
         try {
-            var urls = JSON.parse(localStorage.getItem("wp_hidden_articles"));
+            urls = JSON.parse(localStorage.getItem("wp_hidden_articles"));
             if (!(('object' == typeof(urls)) && (urls instanceof Array))) {
                 urls = [];
             }
         } catch(e) {
-            var urls = [];
+            urls = [];
         }
         return urls;
     }; // eo getHiddenArticlesUrls()
