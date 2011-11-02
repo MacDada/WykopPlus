@@ -55,6 +55,7 @@ var DNUH = (function() {
             unsafeWindow: null,
             logger: null,
             $: null,
+            storage: null,
             loadingEnvDelayer: null
         },
         // plugins registered by DNUH:
@@ -81,6 +82,31 @@ var DNUH = (function() {
 
 
     DNUH.env.$ = DNUH.env.unsafeWindow.$;
+
+
+    DNUH.env.storage = (function(){
+
+        var storage = {};
+
+        storage.get = function(key) {
+            return JSON.parse(localStorage.getItem(key));
+        };
+
+        storage.set = function(key, val) {
+            return localStorage.setItem(key, JSON.stringify(val));
+        };
+
+        storage.secureGet = function(key) {
+            return storage.get;
+        };
+
+        storage.secureSet = function(key) {
+            return storage.set;
+        }
+
+        return storage;
+
+    })();
 
 
     DNUH.env.loadingEnvDelayer = (function() {
@@ -132,8 +158,16 @@ var DNUH = (function() {
             DNUH.env.logger.debug('The plugin "' + name + '" has been registered.');
 
             waitForEnvReady(function() {
-                callback(DNUH.env.unsafeWindow, DNUH.env.logger, DNUH.env.$);
+
+                callback(
+                    DNUH.env.unsafeWindow,
+                    DNUH.env.logger,
+                    DNUH.env.$,
+                    DNUH.env.storage
+                );
+
                 DNUH.env.logger.debug('The plugin "' + name + '" has been activated.');
+
             });
 
         } else {
@@ -174,7 +208,7 @@ DNUH.registerPlugin('dnuhExposerPlugin', function(unsafeWindow) {
  *
  * Wtyczka DnUserScripts dla Wykop.pl.
  */
-DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function(unsafeWindow, logger, $) {
+DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function(unsafeWindow, logger, $, storage) {
 
     // zmienne globalne wtyczki:
     var isNightThemeOn = ("rgb(28, 28, 28)" == $("body").css("background-color"));
@@ -264,7 +298,7 @@ DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function(unsafeWindow, logg
     function getHiddenArticlesUrls() {
         var urls = [];
         try {
-            urls = JSON.parse(localStorage.getItem("wp_hidden_articles"));
+            urls = storage.get("wp_hidden_articles");
             if (!(('object' == typeof(urls)) && (urls instanceof Array))) {
                 urls = [];
             }
@@ -286,7 +320,7 @@ DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function(unsafeWindow, logg
             return (url == e);
         });
 
-        localStorage.setItem("wp_hidden_articles", JSON.stringify(urls));
+        storage.set("wp_hidden_articles", urls);
     }; // eo addHiddenArticleUrl()
 
 
