@@ -45,62 +45,96 @@ Array.prototype.pushIfNotExists = function(element, comparer) {
  *
  * Works with GreaseMonkey extension for FireFox browser.
  */
-DNUH = (function() {
+var DNUH = (function() {
 
     var DNUH = {
+        // set this TRUE if you want logger.debug("message") to work:
+        debug: false,
+        // enviroment variables provied to plugins by DNUH:
+        env: {
+            unsafeWindow: null,
+            logger: null,
+            $: null,
+            loadingEnvDelayer: null
+        },
+        // plugins registered by DNUH:
         plugins: [],
         registerPlugin: registerPlugin
     };
 
 
-    /**
-	 * Change this to TRUE if you want logger.debug("message") to work.
-	 */
-    var debug = false;
+    DNUH.env.unsafeWindow = ('undefined' == typeof unsafeWindow)
+                            ? window
+                            : unsafeWindow;
 
 
-    // firebug console:
-    var logger = {
-        log: unsafeWindow.console.log,
-        debug: ((debug) ? unsafeWindow.console.log : function(){})
+    DNUH.env.logger = {
+        log: DNUH.env.unsafeWindow.console.log,
+        debug: (DNUH.debug)
+                    ? DNUH.env.unsafeWindow.console.log
+                    : function(){}
     };
 
 
-    // temporarly objects witout a use:
-	//var storage = {};
-	//var config = {};
+    DNUH.env.logger.debug('DNUH: loading the enviroment…');
 
 
-    /**
-	 * Hack:
-	 * - loading jQuery from Window on FF,
-	 * - on Chrome jQuery is already loaded by TamperMonkey.
-	 */
-    if ('undefined' == typeof $) {
-		if (unsafeWindow.$) {
-            $ = unsafeWindow.$;
-		} else {
-			// here should be added loading jQuery from external source
+    DNUH.env.$ = DNUH.env.unsafeWindow.$;
+
+
+    DNUH.env.loadingEnvDelayer = (function() {
+        if (DNUH.debug) {
+            setTimeout(function() {
+                DNUH.env.loadingEnvDelayer = false;
+            }, 1000);
+            return null;
+        } else {
+            return false;
         }
-	}
+    })();
 
-    logger.debug('The enviroment is ready.');
+
+    function isEnvReady() {
+        for (var i in DNUH.env) {
+            if (null === DNUH.env[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+
+    function waitForEnvReady(callback) {
+        if (isEnvReady()) {
+            callback();
+        } else {
+            setTimeout(function() {
+                waitForEnvReady(callback);
+            }, 10);
+        }
+    };
 
 
     /**
-	 * Informs DNUH that a plugin wants to get called when the enviroment is ready.
-	 */
+     * Informs DNUH that a plugin wants to get called when the enviroment is ready.
+     */
     function registerPlugin(name, callback) {
         if (!DNUH.plugins.inArray(function(currentElement) {
             return (name == currentElement.name);
         })) {
+
             DNUH.plugins.push({
                 name: name,
                 callback: callback
             });
-            logger.debug('The plugin "' + name + '" has been registered.');
-            callback($, unsafeWindow, logger);
-            logger.debug('The plugin "' + name + '" has been activated.');
+
+            DNUH.env.logger.debug('The plugin "' + name + '" has been registered.');
+
+            waitForEnvReady(function() {
+                callback(DNUH.env.unsafeWindow, DNUH.env.logger, DNUH.env.$);
+                DNUH.env.logger.debug('The plugin "' + name + '" has been activated.');
+            });
+
         } else {
             alert('The plugin "' + name + '" is already registered in DNUH!');
         }
@@ -118,7 +152,7 @@ DNUH = (function() {
  *
  * Wtyczka DnUserScripts dla Wykop.pl.
  */
-DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function($, unsafeWindow, logger) {
+DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function(unsafeWindow, logger, $) {
 
     // zmienne globalne wtyczki:
     var isNightThemeOn = ("rgb(28, 28, 28)" == $("body").css("background-color"));
