@@ -84,29 +84,14 @@ var DNUH = (function() {
     DNUH.env.$ = DNUH.env.unsafeWindow.$;
 
 
-    DNUH.env.storage = (function(){
-
-        var storage = {};
-
-        storage.get = function(key) {
+    DNUH.env.storage = {
+        get: function(key) {
             return JSON.parse(localStorage.getItem(key));
-        };
-
-        storage.set = function(key, val) {
+        },
+        set: function(key, val) {
             return localStorage.setItem(key, JSON.stringify(val));
-        };
-
-        storage.secureGet = function(key) {
-            return storage.get;
-        };
-
-        storage.secureSet = function(key) {
-            return storage.set;
         }
-
-        return storage;
-
-    })();
+    };
 
 
     DNUH.env.loadingEnvDelayer = (function() {
