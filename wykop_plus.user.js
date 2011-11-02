@@ -59,7 +59,8 @@ var DNUH = (function() {
         },
         // plugins registered by DNUH:
         plugins: [],
-        registerPlugin: registerPlugin
+        registerPlugin: registerPlugin,
+        style: style
     };
 
 
@@ -141,6 +142,17 @@ var DNUH = (function() {
     };
 
 
+    /**
+     * Lets you style DOM elements.
+     */
+    function style(cssCode) {
+        waitForEnvReady(function() {
+            DNUH.env.$("head").append('<style type="text/css">' + cssCode + '</style>');
+            DNUH.env.logger.debug("DNUH added new style.");
+        });
+    };
+
+
     return DNUH;
 
 })(); // eo DNUH
@@ -168,6 +180,19 @@ DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function(unsafeWindow, logg
     var isNightThemeOn = ("rgb(28, 28, 28)" == $("body").css("background-color"));
     var hide_article_buttons = null;
 
+    if (isNightThemeOn) {
+        $("body").addClass("night_theme");
+    }
+
+
+    DNUH.style("\
+        .filters label[for='wp_hidden_articles'] {float: right; font-size: 10px; margin-right: 10px;} \
+        .filters input[name='wp_show_hidden_articles'] {float: right; margin: 3px 3px 0px 0px;} \
+        .wp_hide_all_button {font-size: 9px;} \
+        .wp_hide_all_button.up {float: right; margin-right: 10px;} \
+        .wp_hide_article_button {margin-left: 10px; font-size: 10px; color: darkBlue;} \
+        .night_theme .wp_hide_article_button {color: grey;} \
+    ");
 
 
     /**
@@ -188,41 +213,48 @@ DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function(unsafeWindow, logg
     /**
 	 * Wyświetlam lub ukrywam linki w zależności od checkboxa.
 	 */
-    $('<label for="wp_hidden_articles" style="float:right;font-size:10px;margin-right:10px;">pokaż ukryte</label><input type="checkbox" name="wp_show_hidden_articles" style="float:right;margin: 3px 3px 0px 0px;" />')
-    .insertAfter(".filters .slidemenu.categories")
-    .change(function() {
-        if ("checked" == $(this).attr("checked")) {
-            $("article.entry.wp_hidden_article").fadeIn();
-        } else {
-            $("article.entry.wp_hidden_article").fadeOut();
-        }
-    });
+    $('<label for="wp_hidden_articles">pokaż ukryte</label> \
+       <input type="checkbox" name="wp_show_hidden_articles" />')
+        .insertAfter(".filters .slidemenu.categories")
+        .change(function() {
+            if ("checked" == $(this).attr("checked")) {
+                $("article.entry.wp_hidden_article").fadeIn();
+            } else {
+                $("article.entry.wp_hidden_article").fadeOut();
+            }
+        });
 
 
     /**
 	 * Ukrywam link po wskazaniu przez użytkownika.
 	 */
-    hide_article_buttons = $('<a href="#ukryjArtykuł" style="margin-left: 10px; font-size: 10px; color: ' + ((isNightThemeOn) ? 'grey' : 'darkBlue') + ';">nie pokazuj więcej</a>')
-    .insertAfter("article.entry .content header h2 a.link")
-    .click(function(e) {
-        e.preventDefault();
-        addHiddenArticleUrl($(this).prev("a.link").attr("href"));
-        $(this).parents("article.entry").fadeOut().addClass("wp_hidden_article");
-    });
+    hide_article_buttons
+        = $('<a href="#ukryjArtykuł" class="wp_hide_article_button">nie pokazuj więcej</a>')
+            .insertAfter("article.entry .content header h2 a.link")
+            .click(function(e) {
+                e.preventDefault();
+                addHiddenArticleUrl($(this).prev("a.link").attr("href"));
+                $(this).parents("article.entry").fadeOut().addClass("wp_hidden_article");
+            });
 
 
     /**
 	 * Przyciski ukrywania wszystkich artykułów na stronie.
 	 */
-    $('<a href="#" style="float: right; margin-right: 10px; font-size: 9px;">ukryj wszystkie</a>').insertAfter("input[name='wp_show_hidden_articles']").click(function(e) {
-        e.preventDefault();
-        hide_article_buttons.trigger("click");
-    });
-    $('<a href="#" style="font-size: 9px;">ukryj wszystkie</a>').insertBefore(".pager").click(function(e) {
-        e.preventDefault();
-        hide_article_buttons.trigger("click");
-        unsafeWindow.scrollTo(0, 0);
-    });
+    $('<a href="#" class="wp_hide_all_button up">ukryj wszystkie</a>')
+        .insertAfter("input[name='wp_show_hidden_articles']")
+        .click(function(e) {
+            e.preventDefault();
+            hide_article_buttons.trigger("click");
+        });
+
+    $('<a href="#" class="wp_hide_all_button down">ukryj wszystkie</a>')
+        .insertBefore(".pager")
+        .click(function(e) {
+            e.preventDefault();
+            hide_article_buttons.trigger("click");
+            unsafeWindow.scrollTo(0, 0);
+        });
 
 
     /**
