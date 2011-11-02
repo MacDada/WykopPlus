@@ -280,7 +280,7 @@ DNUH.registerPlugin('WykopUkrywanieArtykulowPlugin', function(unsafeWindow, logg
 	 * który nie ma być wyświetlany.
 	 */
     function addHiddenArticleUrl(url) {
-        urls = getHiddenArticlesUrls();
+        var urls = getHiddenArticlesUrls();
 
         urls.pushIfNotExists(url, function(e) {
             return (url == e);
