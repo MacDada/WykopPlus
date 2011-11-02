@@ -148,6 +148,16 @@ var DNUH = (function() {
 
 
 /**
+ * Dorzuca DNUH do głównego okna przeglądarki,
+ * żeby był dostępny np z FireBuga.
+ */
+DNUH.registerPlugin('dnuhExposerPlugin', function(unsafeWindow) {
+    unsafeWindow.DNUH = DNUH;
+});
+
+
+
+/**
  * „Ukrywanie artykułów”
  *
  * Wtyczka DnUserScripts dla Wykop.pl.
