@@ -60,8 +60,8 @@ var DNUH = (function() {
         },
         // plugins registered by DNUH:
         plugins: [],
-        registerPlugin: registerPlugin,
-        style: style
+        registerPlugin: null,
+        style: null
     };
 
 
@@ -106,31 +106,10 @@ var DNUH = (function() {
     })();
 
 
-    function isEnvReady() {
-        for (var i in DNUH.env) {
-            if (null === DNUH.env[i]) {
-                return false;
-            }
-        }
-        return true;
-    };
-
-
-    function waitForEnvReady(callback) {
-        if (isEnvReady()) {
-            callback();
-        } else {
-            setTimeout(function() {
-                waitForEnvReady(callback);
-            }, 10);
-        }
-    };
-
-
     /**
      * Informs DNUH that a plugin wants to get called when the enviroment is ready.
      */
-    function registerPlugin(name, callback) {
+    DNUH.registerPlugin = function(name, callback) {
         if (!DNUH.plugins.inArray(function(currentElement) {
             return (name == currentElement.name);
         })) {
@@ -164,11 +143,32 @@ var DNUH = (function() {
     /**
      * Lets you style DOM elements.
      */
-    function style(cssCode) {
+    DNUH.style = function(cssCode) {
         waitForEnvReady(function() {
             DNUH.env.$("head").append('<style type="text/css">' + cssCode + '</style>');
             DNUH.env.logger.debug("DNUH added new style.");
         });
+    };
+
+
+    function isEnvReady() {
+        for (var i in DNUH.env) {
+            if (null === DNUH.env[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+
+    function waitForEnvReady(callback) {
+        if (isEnvReady()) {
+            callback();
+        } else {
+            setTimeout(function() {
+                waitForEnvReady(callback);
+            }, 10);
+        }
     };
 
 
